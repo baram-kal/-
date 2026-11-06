@@ -1,0 +1,721 @@
+
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}img{max-width:100%}body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style></head><body>
+<title>파산을 피해라</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Dodum&family=Nanum+Gothic+Coding:wght@400;700&display=swap">
+<style>
+/* 레이아웃: 코발트 '은행 창구' 바탕 위에 영수증 종이가 쌓이는 구조. 넓은 화면은 오른쪽에 순위판 고정 */
+:root{
+  --bank:#1a2fd0; --bank-deep:#101d8f; --paper:#fbfbf7; --ink:#14162b; --muted:#5b5f7a;
+  --line:#d5d6e0; --marker:#ffe13b; --good:#0a8f5b; --bad:#d9263f; --gold:#c98a00;
+  --display:"Black Han Sans","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --body:"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --mono:"Nanum Gothic Coding","D2Coding",Consolas,monospace;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{background:var(--bank);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;overflow-x:hidden;-webkit-text-size-adjust:100%}
+*{box-sizing:border-box}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:3px solid var(--marker);outline-offset:2px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:700}
+#hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bank-deep);color:#fff;
+  padding:8px max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bank-deep)}
+#hud .wk{font-family:var(--display);font-size:18px;color:var(--marker);white-space:nowrap}
+#hud .stat{display:flex;flex-direction:column;line-height:1.15}
+#hud .stat small{font-size:11px;opacity:.75}
+#hud .stat b{font-family:var(--mono);font-size:17px}
+#hud .stat b.neg{color:#ff9aa8}
+#hud .tools{margin-left:auto;display:flex;gap:6px}
+#hud .tools button{background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:6px;padding:7px 10px;font-size:13px;min-height:36px;white-space:nowrap}
+#shell{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:20px;
+  padding-block:18px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#side{display:none}
+@media (min-width:980px){
+  #shell.with-side{grid-template-columns:minmax(0,1fr) 340px}
+  #shell.with-side #side{display:block;position:sticky;top:76px;align-self:start}
+  .only-mobile{display:none!important}
+}
+.paper{background:var(--paper);padding:22px 20px;box-shadow:0 8px 0 rgba(0,0,0,.18);min-width:0}
+.paper+.paper{margin-top:16px}
+h1,h2,h3{margin:0;font-family:var(--display);font-weight:400;line-height:1.2;text-wrap:balance}
+h2{font-size:clamp(24px,5vw,32px)} h3{font-size:19px}
+p{margin:0}
+.stack{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--mono);font-size:13px;letter-spacing:.06em;color:var(--muted)}
+.muted{color:var(--muted);font-size:14px}
+.btn{display:block;width:100%;border:0;background:var(--bank);color:#fff;font-family:var(--display);font-size:19px;padding:14px 16px;min-height:52px;box-shadow:0 4px 0 var(--bank-deep)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--bank-deep)}
+.btn:disabled{background:#b9bbce;box-shadow:none;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--bank);box-shadow:inset 0 0 0 2px var(--bank);font-size:16px;min-height:46px}
+.btn.yellow{background:var(--marker);color:var(--ink);box-shadow:0 4px 0 #bfa400}
+.choice{display:block;width:100%;text-align:left;background:#fff;border:2px solid var(--line);padding:12px 14px;min-height:50px}
+.choice:hover:not(:disabled){border-color:var(--bank)}
+.choice.right{border-color:var(--good);background:#e4f7ee}
+.choice.wrong{border-color:var(--bad);background:#fdeaed}
+.choice:disabled{cursor:default;color:var(--ink)}
+.note{padding:12px 14px;background:#eef0ff;font-size:15px}
+.note.good{background:#e4f7ee}.note.bad{background:#fdeaed}.note.warn{background:#fff7cc}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:14px;font-weight:700}
+.field input,textarea{width:100%;border:2px solid var(--line);background:#fff;padding:11px 12px;font-size:16px;border-radius:0}
+textarea{min-height:130px;resize:vertical}
+.hero{color:#fff;padding-block:12px 20px}
+.hero h1{font-size:clamp(46px,13vw,92px);line-height:1;color:var(--marker)}
+.hero p{font-size:17px;max-width:32em;margin-top:12px}
+.rule-table{width:100%;border-collapse:collapse;font-size:15px}
+.rule-table td{padding:7px 0;border-bottom:1px dashed var(--line);vertical-align:top}
+.rule-table td:last-child{text-align:right;font-family:var(--mono);font-weight:700;white-space:nowrap;padding-left:10px}
+.teams{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.teams{grid-template-columns:repeat(2,minmax(0,1fr))}.teams button:last-child{grid-column:1/-1}}
+.team{background:var(--bank);color:var(--marker);border:0;font-family:var(--display);font-size:22px;aspect-ratio:3/4;max-height:190px;width:100%;box-shadow:0 4px 0 var(--bank-deep)}
+.team small{display:block;font-family:var(--mono);color:#fff;font-size:12px;margin-top:6px}
+.reveal{animation:flip .55s ease-out}
+@keyframes flip{from{transform:rotateY(80deg);opacity:.2}to{transform:none;opacity:1}}
+.item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;text-align:left;background:#fff;border:2px solid var(--line);padding:11px 12px;min-height:58px}
+.item .box{width:22px;height:22px;border:2px solid var(--ink);display:grid;place-items:center;font-weight:700;background:#fff}
+.item.on{border-color:var(--bank);background:#eef0ff}.item.on .box{background:var(--bank);color:#fff;border-color:var(--bank)}
+.item .tag{font-size:13px;color:var(--muted)}
+.item .pr{font-family:var(--mono);font-weight:700;text-align:right;white-space:nowrap}
+.item:disabled{opacity:.5;cursor:not-allowed}
+.flash{color:var(--bad);font-weight:700}
+.mini-row{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:2px solid var(--bank);background:#fff;color:var(--bank);padding:6px 10px;font-size:14px;min-height:38px}
+.chip.on{background:var(--bank);color:#fff}
+.forecast{display:flex;justify-content:space-between;gap:12px;font-family:var(--mono);font-weight:700;padding:10px 0;border-top:2px dashed var(--ink)}
+#arena{position:relative;width:100%;height:min(58vh,440px);min-height:300px;background:#20243f;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.mhud{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-weight:700;margin-bottom:8px}
+.tbar{height:8px;background:var(--line);margin-bottom:8px}.tbar i{display:block;height:100%;background:var(--bad);width:100%}
+.barcode{position:absolute;width:112px;height:76px;border:0;padding:8px;background:#fff;transform:translate(-50%,-50%)}
+.barcode i{display:block;height:100%;background:repeating-linear-gradient(90deg,#000 0 3px,#fff 3px 5px,#000 5px 6px,#fff 6px 10px)}
+.mosq{position:absolute;width:58px;height:58px;margin:-29px;border:0;background:none;padding:0;font-size:36px;line-height:58px;text-align:center}
+.mosq span{display:block;filter:drop-shadow(0 0 2px #fff)}
+.mosq.gold span{filter:drop-shadow(0 0 7px #ffd400) drop-shadow(0 0 2px #ffd400)}
+.parcel{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:min(78%,300px);background:#c99a63;padding:14px;text-align:center;box-shadow:0 5px 0 #8c6535}
+.parcel div{background:#fff;padding:18px 8px;font-family:var(--display);font-size:clamp(23px,6vw,30px)}
+.sort{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
+.sort button{min-height:68px;font-family:var(--display);font-size:clamp(17px,4.6vw,21px);border:0;background:var(--bank);color:#fff;padding:6px 2px}
+.sort small{display:block;font-family:var(--mono);font-size:11px;opacity:.7}
+.bubble-row{display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;align-items:start}
+.boss{width:48px;height:48px;background:var(--marker);display:grid;place-items:center;font-size:26px;border-radius:50%}
+.bubble{word-break:keep-all;position:relative;background:#eef0ff;padding:12px 14px;border-radius:14px}
+.bubble::before{content:"";position:absolute;left:-9px;top:16px;border-style:solid;border-width:7px 10px 7px 0;border-color:transparent #eef0ff transparent transparent}
+.hearts{font-size:18px;line-height:1.2;white-space:nowrap}
+.barcode.bad{background:#ffd5db;box-shadow:0 0 0 3px var(--bad)}
+.barcode.bad i{background:repeating-linear-gradient(135deg,var(--bad) 0 6px,#ffd5db 6px 12px)}
+#arena.hit{animation:hit .3s}
+@keyframes hit{0%{box-shadow:inset 0 0 0 0 var(--bad)}30%{box-shadow:inset 0 0 0 14px var(--bad)}100%{box-shadow:inset 0 0 0 0 var(--bad)}}
+.fx{position:absolute;pointer-events:none;color:var(--marker);font-family:var(--mono);font-weight:700;animation:up .6s ease-out forwards;transform:translate(-50%,-50%)}
+.fx.minus{color:#ff9aa8}
+@keyframes up{to{transform:translate(-50%,-180%);opacity:0}}
+.dice{font-family:var(--display);font-size:64px;text-align:center;color:var(--bank)}
+.bigcard{text-align:center;padding:18px 10px;border:2px dashed var(--ink)}
+.bigcard .amt{font-family:var(--mono);font-weight:700;font-size:28px}
+.sms{background:#e9ebf3;padding:13px 14px;border-radius:14px 14px 14px 2px;font-size:15px;word-break:break-all}
+.receipt{background:#fff;font-family:var(--mono);font-size:14px;padding:22px 18px 28px;max-width:420px;margin:0 auto;width:100%;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),95% 100%,90% calc(100% - 9px),85% 100%,80% calc(100% - 9px),75% 100%,70% calc(100% - 9px),65% 100%,60% calc(100% - 9px),55% 100%,50% calc(100% - 9px),45% 100%,40% calc(100% - 9px),35% 100%,30% calc(100% - 9px),25% 100%,20% calc(100% - 9px),15% 100%,10% calc(100% - 9px),5% 100%,0 calc(100% - 9px))}
+.receipt h3{word-break:keep-all;text-align:center;font-family:var(--mono);font-weight:700;font-size:18px}
+.receipt .c{text-align:center}
+.receipt .sec{border-top:1px dashed var(--ink);margin-top:10px;padding-top:8px}
+.rl{display:flex;justify-content:space-between;gap:12px;padding:2px 0}
+.rl span:first-child{min-width:0;overflow-wrap:anywhere}.rl span:last-child{white-space:nowrap}
+.rl.t{font-weight:700;font-size:15px}
+.wk-label{font-weight:700;margin-top:6px}
+.bars{height:42px;margin-top:14px;background:repeating-linear-gradient(90deg,#000 0 2px,#fff 2px 4px,#000 4px 7px,#fff 7px 9px,#000 9px 10px,#fff 10px 14px)}
+.scores{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.scores div{background:#fff;padding:12px;text-align:center;border:2px solid var(--ink)}
+.scores b{display:block;font-family:var(--mono);font-size:clamp(21px,6vw,28px)}
+.verdict{font-size:clamp(38px,11vw,64px);color:var(--marker);line-height:1.05}
+.verdict.bad{color:#ffb3bf}
+.board{color:var(--ink)}
+.board-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--muted);margin-right:5px}
+.dot.on{background:var(--good)}
+.tabs{display:flex;gap:4px;margin-bottom:8px}
+.tabs button{flex:1;background:#fff;border:2px solid var(--ink);padding:5px;font-size:14px;min-height:36px}
+.tabs button.on{background:var(--ink);color:#fff}
+.rows{list-style:none;margin:0;padding:0}
+.rows li{display:grid;grid-template-columns:30px minmax(0,1fr) 6.6em 2.8em;gap:9px;align-items:center;padding:8px 2px;border-bottom:1px dashed var(--line);font-size:14px}
+.rows li.me{background:#fff7cc}
+.rows .rk{font-family:var(--display);font-size:18px;color:var(--bank);text-align:center}
+.rows .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+.rows .nm small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.rows .v{font-family:var(--mono);font-weight:700;text-align:right;white-space:nowrap}
+.rows .v.neg{color:var(--bad)}
+.rows .bk{color:var(--bad);font-size:12px;font-weight:700}
+#sheet,#modal,#pause{position:fixed;inset:0;z-index:40;background:rgba(9,13,70,.72);display:flex;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+#sheet{align-items:flex-end;justify-content:center}
+#sheet>div{background:var(--paper);width:100%;max-width:560px;max-height:85%;overflow:auto;padding:18px}
+#modal,#pause{align-items:center;justify-content:center;z-index:50}
+#modal>div,#pause>div{background:var(--paper);padding:22px;max-width:380px;width:100%}
+#full{color:#fff;text-align:center}#full .paper{text-align:left}
+#full .code{font-family:var(--mono);font-size:clamp(32px,7vw,60px);font-weight:700;color:var(--marker);letter-spacing:.08em}
+#full .paper{max-width:900px;margin:14px auto 0}
+#full .rows li{font-size:clamp(15px,2.2vw,21px)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.progress{font-family:var(--mono);font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.reveal,.fx,#arena.hit{animation:none}}
+</style>
+
+<div id="hud" hidden></div>
+<div id="shell">
+  <main id="main"></main>
+  <aside id="side"><div class="paper board" id="sideBoard"></div></aside>
+</div>
+<div id="sheet" hidden><div><div class="board" id="sheetBoard"></div><button class="btn ghost" data-act="closeSheet" style="margin-top:12px">닫기</button></div></div>
+<div id="pause" hidden><div class="stack"><h2>일시정지</h2><p class="muted">시간이 멈췄어요. 준비되면 이어서 진행해 주세요.</p><button class="btn" data-act="resume">계속하기</button><button class="btn ghost" data-act="askRestart">처음부터 다시 하기</button></div></div>
+<div id="modal" hidden><div class="stack"><h3 id="modalText"></h3><div class="row2"><button class="btn ghost" data-act="modalNo">취소</button><button class="btn" data-act="modalYes">확인</button></div></div></div>
+
+<script>
+/* =====================================================================
+   게임 데이터. 문구·금액·문제는 이 CONFIG 안에서만 고치면 됩니다.
+   ===================================================================== */
+const CONFIG = {
+  // 실시간 순위 서버 주소. 예: "https://my-game-default-rtdb.firebaseio.com"
+  FIREBASE_URL: "",
+  POLL_MS: 2000,                // 순위 새로고침 간격
+  HIDE_BOARD_IN_WEEK3: false,   // true면 3주차 동안 플레이어에게 순위판을 숨김
+  START_MONEY: 70000,
+  FIXED_COST: 45000,
+  INCOME: {1: 60000, 2: 40000, 3: 60000},
+  ABILITY_VALUE: 30000,
+  ABILITY_SAT: 5,
+  SAVING: {price: 10000, refund: 11000, sat: 1},
+  OTT: {price: 10000, firstSat: 3, nextSat: 1},
+  FLASH_SECONDS: 30,
+  MINI_LIVES: 3,                // 알바 목숨. 모두 잃으면 시간이 남아도 즉시 종료
+  MINI_MAX_REWARD: 20000,       // 알바 1회 최대 급여
+  TEAMS: {
+    1:{name:"김철수",job:"컴퓨터공학과 3학년 · 절약가",ability:"중고 거래의 신",desc:"소비 항목 1개를 최대 30,000원 할인받아요. 상점에서 원하는 상품에 직접 써요."},
+    2:{name:"이영희",job:"경영학과 2학년 · 알바왕",ability:"열정 페이 극복",desc:"미션이나 아르바이트에 처음 성공할 때 30,000원을 추가로 받아요. 자동으로 적용돼요."},
+    3:{name:"박민수",job:"미대 4학년 · 낭만파",ability:"소소한 쾌락주의",desc:"구매 상품 1개의 만족도를 5점 더 올려요. 상점에서 원하는 상품에 직접 써요."},
+    4:{name:"정수진",job:"체육학과 1학년 · 방어형",ability:"보험 전문가",desc:"돌발 지출과 사기 피해를 합계 30,000원까지 면제받아요. 자동으로 적용돼요."},
+    5:{name:"최동현",job:"미디어학과 3학년 · 구독중독",ability:"멤버십 혜택",desc:"OTT 구독료가 3주 내내 0원이에요. 자동으로 적용돼요."}
+  },
+  QUIZ: [
+    {q:"다음 지출 항목 중 '고정지출'이 아닌 변동지출은 무엇인가요?",opts:["월세","교통비","구독료","간식"],a:3,exp:"월세, 정기 교통비, 정기 구독료는 정기적으로 나가는 고정지출이고, 간식비는 선택에 따라 달라지는 변동지출이에요."},
+    {q:"정가 40,000원인 전공 교재를 중고로 30% 할인받아 사고, 비상금 저축으로 10,000원을 냈습니다. 통장에서 나간 총액은 얼마인가요?",opts:["28,000원","30,000원","38,000원","50,000원"],a:2,exp:"교재비 28,000원에 저축 10,000원을 더하면 38,000원이에요."},
+    {q:"매주 10,000원씩 나가는 OTT를 3주 유지할 때와 첫 주만 보고 해지할 때의 총지출 차이는 얼마인가요?",opts:["10,000원","20,000원","30,000원","40,000원"],a:1,exp:"3주 유지는 30,000원, 1주만 보면 10,000원이라 20,000원 차이가 나요."},
+    {q:"'기회비용'에 대한 설명으로 가장 올바른 것은 무엇인가요?",opts:["물건을 살 때 지불한 실제 현금 금액","어떤 선택을 함으로써 포기해야 하는 다른 선택의 최대 가치","통장에 남아 있는 잔액","금융사기로 손해 본 금액"],a:1,exp:"기회비용은 내가 고른 것 때문에 포기한 선택 중 가장 큰 가치예요."}
+  ],
+  QUIZ_REWARD: 2500,
+  SMISHING: {
+    message:"[택배] 배송지 오류! 아래 링크를 눌러 주소를 재입력하세요 http://dlvr-check.example/a1b2",
+    options:[
+      {t:"링크를 바로 눌러 주소를 입력한다",amt:-10000,r:"스미싱 피해가 발생했어요. 모르는 링크는 누르지 않는 게 가장 안전해요.",ok:false},
+      {t:"공식 택배 앱에서 운송장 번호를 확인한다",amt:5000,r:"현명한 대처예요. 문자 속 링크 대신 공식 경로로 확인했어요.",ok:true},
+      {t:"번호를 차단하고 경찰·스팸으로 신고한다",amt:5000,r:"완벽한 대처예요. 다른 사람의 피해까지 막을 수 있어요.",ok:true}
+    ]
+  },
+  ESSAY: {
+    prompt:"통장 잔액이 40,000원 남았는데, 만족도가 매우 높은 졸업여행(40,000원)과 친구 생일 선물(15,000원) 사이에서 고민 중입니다. 어떤 선택이 가장 합리적일까요? 이유도 함께 적어 주세요.",
+    reward:3000, minLength:15,
+    keywords:{"고정지출 고려":["고정","생활비","월세","식비","교통비","남겨","남는"],"비상금 언급":["비상금","저축","적금","인출"],"대안 제시":["대안","대신","직접","손편지","나중","다음","줄이","아껴","만들","포기"]},
+    hint:"고정지출, 비상금, 대안 중 하나 이상을 근거로 적어 주세요."
+  },
+  EVENTS:[
+    {t:"갑작스러운 경조사",amt:-10000},{t:"자전거 타이어 펑크 수리",amt:-8000},{t:"감기몸살 병원비와 약값",amt:-5000},
+    {t:"통신비 연체 가산금",amt:-3000},{t:"안 쓰는 물건 중고거래 성공",amt:5000},{t:"본가 반찬 지원과 알바 가산금",amt:3000},{t:"평화로운 일주일",amt:0}
+  ],
+  LAPTOP:{center:40000,try:10000,failExtra:60000,successMax:3},
+  SHOP:{
+    1:[{id:"ott",name:"OTT 구독 서비스",price:10000,sat:3,tag:"매주 자동 결제, 주 시작 때 해지 가능"},{id:"cafe",name:"카페 스터디 세트",price:8000,sat:2},{id:"chicken",name:"팀 치킨 회식",price:25000,sat:4}],
+    2:[{id:"night",name:"야식 배달",price:12000,sat:3},{id:"study",name:"스터디카페 이용권",price:15000,sat:3},{id:"flash",name:"한정특가 충동구매",price:20000,sat:5,flash:true}],
+    3:[{id:"trip",name:"졸업 여행 (당일)",price:40000,sat:5},{id:"concert",name:"콘서트·전시 관람",price:30000,sat:4},{id:"gift",name:"친구 생일 선물",price:15000,sat:3}]
+  },
+  BOOK:{new:20000,used:12000},
+  MINI:{
+    1:{job:"편의점 아르바이트",boss:"점장님",icon:"🏪",seconds:20,pay:500,penalty:500,bonusAt:15,bonus:5000,
+      unit:"바코드 스캔",
+      bubbles:["당신은 이번 주 편의점으로 아르바이트를 하러 왔습니다! 손님들이 가져온 물건의 바코드를 주어진 시간 안에 빠르게 찍어보세요. 바코드 1개를 정확하게 찍을 때마다 500원을 벌 수 있습니다.","제한 시간은 20초예요. 빨간 불량 바코드를 찍거나 바코드를 놓치면 500원이 깎이고 목숨이 1개 줄어요. 15개 이상 찍으면 보너스 5,000원! 목숨 3개를 다 잃으면 그때까지 번 돈만 받고 바로 퇴근이에요."]},
+    2:{job:"방역 아르바이트",boss:"방역팀장님",icon:"🧰",seconds:25,pay:400,gold:1200,penalty:300,noMissBonus:2000,
+      unit:"모기 퇴치",
+      bubbles:["당신은 이번 주 방역 업체에서 아르바이트를 합니다! 고객님 자취방의 모기를 빠르게 잡아보세요. 모기 1마리에 400원, 황금 모기는 1,200원을 벌 수 있습니다.","제한 시간은 25초예요. 모기를 놓치거나 꿀벌을 잡으면 300원이 깎이고 목숨이 1개 줄어요. 실수 없이 끝내면 보너스 2,000원! 목숨 3개를 다 잃으면 그때까지 번 돈만 받고 바로 퇴근이에요."]},
+    3:{job:"택배 물류센터 아르바이트",boss:"센터장님",icon:"📦",seconds:30,pay:1000,penalty:1000,comboEvery:5,combo:1000,accuracyMin:10,accuracyBonus:2000,
+      unit:"택배 분류",
+      bubbles:["당신은 이번 주 택배 물류센터에서 아르바이트를 하게 되었습니다! 전국에서 도착한 택배를 올바른 지역으로 분류해야 합니다. 택배에 적힌 도시 이름을 확인하고 해당하는 지역을 선택해주세요. 빠르고 정확하게 분류할수록 더 많은 돈을 벌 수 있습니다!","제한 시간은 30초예요. 1개를 맞힐 때마다 1,000원, 5개 연속 정답마다 보너스 1,000원을 벌어요. 10개 이상을 실수 없이 맞히면 보너스 2,000원을 더 줘요. 틀리면 1,000원이 깎이고 목숨이 1개 줄어요. 목숨 3개를 다 잃으면 그때까지 번 돈만 받고 바로 퇴근이에요."]}
+  },
+  REGIONS:{
+    "서울특별시":["마포구","강남구","노원구","관악구","종로구","은평구"],
+    "부산광역시":["부산","해운대구","수영구"],
+    "대구광역시":["대구","수성구","달서구"],
+    "경기도":["수원","성남","고양","파주","용인","평택"],
+    "강원특별자치도":["춘천","강릉","원주","속초","삼척","동해"],
+    "충청북도":["청주","충주","제천"],
+    "충청남도":["천안","공주","아산","보령","서산","논산"],
+    "전북특별자치도":["전주","군산","익산","남원","정읍"],
+    "전라남도":["목포","여수","순천","나주","광양"],
+    "경상북도":["안동","포항","경주","구미","영주"],
+    "경상남도":["창원","통영","거제","진주","김해"],
+    "제주특별자치도":["제주시","서귀포"]
+  }
+};
+const STEPS={1:["income","quiz","mini","card","shop","settle"],2:["income","smishing","mini","laptop","shop","settle"],3:["income","essay","mini","card","shop","settle"]};
+const WEEK_NAME={1:"개강 첫 주",2:"시험기간",3:"종강 주간"};
+
+/* ---------- 공통 도구 ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const won=n=>n.toLocaleString("ko-KR")+"원";
+const signed=n=>(n>0?"+":n<0?"-":"")+Math.abs(n).toLocaleString("ko-KR")+"원";
+const rnd=n=>Math.floor(Math.random()*n);
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+
+let S=null, screen="start", boardTab="total", G=null, flashTimer=null, paused=false, pauseAt=0, pausedMs=0, modalYes=null;
+const now=()=>performance.now()-pausedMs;
+function newGame(name,code,pid){return{pid,name,code,team:0,w:1,si:0,bal:CONFIG.START_MONEY,sat:0,ledger:[{w:0,l:"초기 자금",a:CONFIG.START_MONEY}],flags:{},shield:CONFIG.ABILITY_VALUE,savings:0,ott:false,cart:{},book:null,abilityOn:null,abilityUsed:false,bonusUsed:false,qi:0,qAns:{},mini:{},card:{},smish:null,essay:null,laptop:null,flashLeft:CONFIG.FLASH_SECONDS,done:false}}
+function save(){if(S)store.set("bankrupt.game",S)}
+function step(){return STEPS[S.w][S.si]}
+function add(label,amt){S.ledger.push({w:S.w,l:label,a:amt});S.bal+=amt;Sync.push()}
+function pay(label,cost){const sh=S.team===4?Math.min(S.shield,cost):0;S.shield-=sh;add(label+(sh?` (보험 ${won(sh)} 면제)`:""),-(cost-sh));return sh}
+function once(key,fn){if(S.flags[key])return;S.flags[key]=1;fn();save()}
+function bonus(){if(S.team===2&&!S.bonusUsed){S.bonusUsed=true;add("열정 페이 극복 보너스",CONFIG.ABILITY_VALUE);return true}return false}
+
+/* ---------- 실시간 동기화 ---------- */
+const Sync={
+  mode:"solo",code:"",players:{},ok:false,timer:null,room:null,spectator:false,pushTimer:null,
+  entry(){return S&&S.team?{n:S.name,t:S.team,b:S.bal,s:S.sat,w:S.w,d:S.done?1:0,at:Date.now()}:null},
+  fb(){return CONFIG.FIREBASE_URL.replace(/\/+$/,"")+"/rooms/"+this.code+"/players"},
+  async start(code,spectator){
+    this.stop();this.code=code;this.spectator=!!spectator;this.players={};
+    if(!code){this.mode="solo";renderBoards();return}
+    if(CONFIG.FIREBASE_URL){this.mode="firebase";this.poll();this.timer=setInterval(()=>this.poll(),CONFIG.POLL_MS);this.push();return}
+    this.mode="solo";renderBoards();
+    if(!window.claude||!window.claude.use)return;
+    try{
+      const room=await window.claude.use("room");
+      if(!room||this.code!==code)return;
+      const r=await room.join(code);
+      this.room=r;this.mode="room";
+      const onPeers=c=>{c.peers.forEach(p=>{const e=p.presence&&p.presence.p;const id=p.presence&&p.presence.id;if(e&&typeof id==="string")this.players[id]=e});this.ok=r.connected();renderBoards()};
+      r.onPeers(onPeers,()=>{this.ok=false;renderBoards()});
+      r.onConnection(c=>{this.ok=c;renderBoards()});
+      this.push();
+    }catch(e){this.mode="solo";renderBoards()}
+  },
+  stop(){clearInterval(this.timer);this.timer=null;if(this.room){try{this.room.leave()}catch(e){}this.room=null}this.ok=false},
+  async poll(){
+    try{const r=await fetch(this.fb()+".json",{cache:"no-store"});if(!r.ok)throw 0;this.players=(await r.json())||{};this.ok=true}
+    catch(e){this.ok=false}
+    renderBoards();
+  },
+  push(){
+    renderBoards();
+    if(this.spectator||!S||!S.pid)return;
+    clearTimeout(this.pushTimer);
+    this.pushTimer=setTimeout(()=>{
+      const e=this.entry();if(!e)return;
+      if(this.mode==="firebase")fetch(this.fb()+"/"+S.pid+".json",{method:"PUT",body:JSON.stringify(e)}).then(r=>{this.ok=r.ok}).catch(()=>{this.ok=false});
+      else if(this.mode==="room"&&this.room)this.room.presence({id:S.pid,p:e}).catch(()=>{});
+    },250);
+  },
+  list(){
+    const m={};
+    for(const[id,p]of Object.entries(this.players)){
+      if(!p||typeof p!=="object")continue;
+      const b=Number(p.b),s=Number(p.s);if(!isFinite(b)||!isFinite(s))continue;
+      m[id]={id,n:String(p.n||"익명").slice(0,12),t:Number(p.t)||0,b,s,w:Number(p.w)||1,d:!!p.d};
+    }
+    if(S&&S.team&&!this.spectator){const e=this.entry();m[S.pid]={id:S.pid,n:e.n,t:e.t,b:e.b,s:e.s,w:e.w,d:!!e.d}}
+    return Object.values(m);
+  }
+};
+
+/* 순위: 잔액 등수 + 만족도 등수가 작을수록 앞. 파산 확정자는 맨 뒤. */
+function ranked(list,tab){
+  const rankOf=(arr,key)=>{const r={};const sorted=[...arr].sort((a,b)=>b[key]-a[key]);sorted.forEach((p,i)=>{r[p.id]=i>0&&sorted[i-1][key]===p[key]?r[sorted[i-1].id]:i+1});return r};
+  const bk=p=>p.d&&p.b<0;
+  const alive=list.filter(p=>!bk(p)),rb=rankOf(alive,"b"),rs=rankOf(alive,"s");
+  alive.forEach(p=>p.score=rb[p.id]+rs[p.id]);
+  const cmp={total:(a,c)=>a.score-c.score||c.b-a.b||c.s-a.s,money:(a,c)=>c.b-a.b||c.s-a.s,sat:(a,c)=>c.s-a.s||c.b-a.b}[tab];
+  const out=[...alive].sort(cmp);
+  out.forEach((p,i)=>{const q=out[i-1];p.rank=q&&cmp(q,p)===0?q.rank:i+1});
+  return out.concat(list.filter(bk).sort((a,c)=>c.b-a.b).map(p=>({...p,rank:"-"})));
+}
+function boardHTML(big){
+  const hidden=CONFIG.HIDE_BOARD_IN_WEEK3&&S&&S.team&&S.w===3&&!S.done&&!Sync.spectator;
+  const list=Sync.list(),rows=ranked(list,boardTab);
+  const status=Sync.mode==="solo"?"혼자 플레이 중":Sync.ok?`실시간 연결 · ${list.length}명`:"연결을 다시 시도하는 중";
+  const head=`<div class="board-head"><h3>실시간 순위</h3><span class="muted"><span class="dot ${Sync.mode!=="solo"&&Sync.ok?"on":""}"></span>${status}</span></div>`;
+  if(hidden)return head+`<p class="note">3주차에는 순위가 비공개예요. 게임이 끝나면 공개돼요.</p>`;
+  const tabs=`<div class="tabs">${[["total","종합"],["money","잔액"],["sat","만족도"]].map(([k,l])=>`<button data-act="tab" data-v="${k}" class="${boardTab===k?"on":""}">${l}</button>`).join("")}</div>`;
+  if(!rows.length)return head+tabs+`<p class="muted">참가자가 게임을 시작하면 여기에 순위가 나타나요.</p>`;
+  const li=rows.map(p=>`<li class="${S&&p.id===S.pid?"me":""}"><span class="rk">${p.rank}</span><span class="nm">${esc(p.n)}<small>${p.d?(p.b<0?'<span class="bk">파산</span>':"완주"):p.w+"주차 진행 중"}</small></span><span class="v ${p.b<0?"neg":""}">${p.b.toLocaleString("ko-KR")}원</span><span class="v">${p.s}점</span></li>`).join("");
+  return head+tabs+`<ol class="rows">${li}</ol>`+(big?"":`<p class="muted" style="margin-top:8px">종합은 잔액 순위와 만족도 순위를 더해 정해요.</p>`);
+}
+function renderBoards(){
+  const h=boardHTML();
+  if($("#sideBoard"))$("#sideBoard").innerHTML=h;
+  if(!$("#sheet").hidden)$("#sheetBoard").innerHTML=h;
+  if(screen==="full"&&$("#fullBoard"))$("#fullBoard").innerHTML=fullBoard();
+  renderHUD();
+  const me=$("#endRank");if(me)me.textContent=myRank();
+}
+function myRank(){if(!S)return"";const r=ranked(Sync.list(),"total"),p=r.find(x=>x.id===S.pid);return r.length>1&&p?(p.rank==="-"?"파산으로 순위에서 제외됐어요":`현재 종합 ${p.rank}위 / ${r.length}명`):""}
+function fullBoard(){
+  const list=Sync.list(),rows=ranked(list,"total"),done=list.filter(p=>p.d).length,all=list.length&&done===list.length;
+  const w=all&&rows[0]&&rows[0].rank!=="-"?`<p class="note warn" style="font-size:20px"><b>우승: ${rows.filter(p=>p.rank===1).map(p=>esc(p.n)).join(", ")}</b></p>`:"";
+  return w+`<p class="muted">완주 ${done} / ${list.length}명</p>`+boardHTML(true);
+}
+
+/* ---------- 상단 표시줄 ---------- */
+function renderHUD(){
+  const h=$("#hud"),inGame=S&&S.team&&screen==="game";
+  h.hidden=!inGame;
+  $("#shell").classList.toggle("with-side",!!inGame||screen==="end");
+  if(!inGame)return;
+  const wk=S.done?"결과":`${S.w}주차 · ${WEEK_NAME[S.w]}`;
+  h.innerHTML=`<span class="wk">${wk}</span>
+    <span class="stat"><small>잔액</small><b class="${S.bal<0?"neg":""}">${S.bal.toLocaleString("ko-KR")}원</b></span>
+    <span class="stat"><small>만족도</small><b>${S.sat}점</b></span>
+    <span class="tools"><button class="only-mobile" data-act="openSheet">순위</button><button data-act="pause">일시정지</button></span>`;
+}
+
+/* ---------- 화면 ---------- */
+function go(html){$("#main").innerHTML=html;renderHUD();window.scrollTo?.(0,0)}
+function render(keepFocus){
+  clearInterval(flashTimer);
+  if(screen==="start")return renderStart();
+  if(screen==="full")return renderFull();
+  if(!S)return renderStart();
+  if(screen==="team")return renderTeam();
+  if(screen==="reveal")return renderReveal();
+  if(screen==="end")return renderEnd();
+  ({income:rIncome,quiz:rQuiz,mini:rMini,card:rCard,shop:rShop,settle:rSettle,smishing:rSmish,laptop:rLaptop,essay:rEssay})[step()]();
+  if(keepFocus){const el=document.getElementById(keepFocus);el&&el.focus()}
+}
+function renderStart(){
+  const hash=(location.hash||"").replace("#","").toLowerCase();
+  const code=/^room-[a-z0-9]{3,12}$/.test(hash)?hash.slice(5):"";
+  const last=store.get("bankrupt.game");
+  const c=CONFIG;
+  go(`<section class="hero"><h1>파산을<br>피해라!</h1><p>대학생으로 3주를 버텨 보세요. 끝까지 살아남고, 가장 많은 잔액과 가장 높은 만족도를 가진 사람이 이겨요.</p></section>
+  <div class="paper stack">
+    ${last&&last.team&&!last.done?`<button class="btn yellow" data-act="continue">${esc(last.name)}님 게임 이어 하기</button>`:""}
+    <div class="field"><label for="nick">닉네임</label><input id="nick" maxlength="12" autocomplete="off" placeholder="순위판에 보일 이름" value="${esc(last?last.name:"")}"></div>
+    <div class="field"><label for="roomCode">방 코드</label><input id="roomCode" maxlength="12" autocomplete="off" autocapitalize="characters" placeholder="진행자가 알려 준 코드" value="${esc((code||(last&&last.code)||"").toUpperCase())}"><span class="muted">비워 두면 혼자 연습할 수 있어요.</span></div>
+    <p class="note bad" id="startErr" hidden></p>
+    <button class="btn" data-act="start">게임 시작</button>
+    <button class="btn ghost" data-act="host">진행자용 순위판 열기</button>
+  </div>
+  <div class="paper stack">
+    <h3>게임 방법</h3>
+    <table class="rule-table">
+      <tr><td>초기 자금</td><td>${won(c.START_MONEY)}</td></tr>
+      <tr><td>주당 수입 (시험기간은 ${won(c.INCOME[2])})</td><td>${won(c.INCOME[1])}</td></tr>
+      <tr><td>주당 고정지출</td><td>${won(c.FIXED_COST)}</td></tr>
+    </table>
+    <p>퀴즈, 미션, 주간 아르바이트로 돈을 벌고 상점에서 만족도를 올리세요. 상점 구매와 고정지출은 주 끝에 한꺼번에 빠져나가요. 아르바이트에서 실수하면 돈이 깎이고, 목숨 3개를 다 잃으면 일찍 끝나요. 마지막 잔액이 0원 아래면 파산이에요.</p>
+  </div>`);
+}
+function cleanCode(v){return v.trim().toLowerCase().replace(/[^a-z0-9]/g,"")}
+function renderTeam(){
+  go(`<div class="paper stack"><span class="eyebrow">블라인드 선택</span><h2>팀을 골라 주세요</h2><p>모든 팀의 시작 조건은 같아요. 어떤 캐릭터가 나올지는 고른 뒤에 공개돼요.</p>
+  <div class="teams">${[1,2,3,4,5].map(n=>`<button class="team" data-act="pick" data-v="${n}">Team ${n}<small>?</small></button>`).join("")}</div></div>`);
+}
+function renderReveal(){
+  const t=CONFIG.TEAMS[S.team];
+  go(`<div class="paper stack reveal"><span class="eyebrow">Team ${S.team} 캐릭터 공개</span><h2>${t.name}</h2><p class="muted">${t.job}</p>
+  <div class="note"><b>${t.ability}</b><br>${t.desc}</div>
+  <button class="btn" data-act="next">1주차 시작</button></div>`);
+}
+function rIncome(){
+  const w=S.w,inc=CONFIG.INCOME[w];
+  once("income"+w,()=>add(w===2?"시험기간 수입":"기본 수입",inc));
+  const ott=S.ott&&w>1?`<div class="note"><b>OTT 구독 중</b> · 이번 주 ${S.team===5?"구독료 0원(멤버십 혜택)":won(CONFIG.OTT.price)}이 주 끝에 결제돼요.<div style="margin-top:8px"><button class="btn ghost" data-act="cancelOtt">구독 해지하기</button></div></div>`:"";
+  go(`<div class="paper stack"><span class="eyebrow">WEEK ${w}</span><h2>${WEEK_NAME[w]}</h2>
+  <div class="bigcard"><p>${w===2?"시험기간이라 알바를 줄였어요":"이번 주 수입이 들어왔어요"}</p><p class="amt" style="color:var(--good)">${signed(inc)}</p></div>
+  ${ott}<button class="btn" data-act="next">다음</button></div>`);
+}
+function rQuiz(){
+  const i=S.qi,q=CONFIG.QUIZ[i],picked=S.qAns[i];
+  const answered=picked!==undefined;
+  go(`<div class="paper stack"><span class="eyebrow">기초 경제 퀴즈 ${i+1} / ${CONFIG.QUIZ.length}</span><h3>${esc(q.q)}</h3>
+  <div class="stack" style="gap:8px">${q.opts.map((o,k)=>`<button class="choice ${answered?(k===q.a?"right":k===picked?"wrong":""):""}" ${answered?"disabled":""} data-act="answer" data-v="${k}">${k+1}. ${esc(o)}</button>`).join("")}</div>
+  ${answered?`<p class="note ${picked===q.a?"good":"bad"}"><b>${picked===q.a?`정답이에요! ${signed(CONFIG.QUIZ_REWARD)}`:"아쉬워요."}</b><br>${esc(q.exp)}</p><button class="btn" data-act="quizNext">${i+1<CONFIG.QUIZ.length?"다음 문제":"다음"}</button>`:""}</div>`);
+}
+function rSmish(){
+  const c=S.smish,o=CONFIG.SMISHING;
+  go(`<div class="paper stack"><span class="eyebrow">금융 사기 미션</span><h3>이런 문자를 받았어요. 어떻게 할까요?</h3><p class="sms">${esc(o.message)}</p>
+  <div class="stack" style="gap:8px">${o.options.map((x,k)=>`<button class="choice ${c===k?(x.ok?"right":"wrong"):""}" ${c!==null?"disabled":""} data-act="smish" data-v="${k}">${esc(x.t)}</button>`).join("")}</div>
+  ${c!==null?`<p class="note ${o.options[c].ok?"good":"bad"}"><b>${signed(S.smishAmt??o.options[c].amt)}</b><br>${esc(o.options[c].r)}</p><button class="btn" data-act="next">다음</button>`:""}</div>`);
+}
+function rEssay(){
+  const e=S.essay,o=CONFIG.ESSAY;
+  go(`<div class="paper stack"><span class="eyebrow">합리적 소비 미션</span><h3>${esc(o.prompt)}</h3>
+  ${e?`<p class="note">${esc(e.text)}</p><p class="note ${e.pass?"good":"bad"}"><b>${e.pass?`근거가 탄탄해요! ${signed(o.reward)}`:"보상을 받지 못했어요."}</b><br>${e.pass?`인정된 근거: ${esc(e.hits.join(", "))}`:esc(o.hint)}</p><button class="btn" data-act="next">다음</button>`:
+  `<div class="field"><label for="essayText">나의 선택과 이유</label><textarea id="essayText" maxlength="400"></textarea><span class="muted">${esc(o.hint)}</span></div><button class="btn" data-act="essay">제출하기</button>`}</div>`);
+}
+function rCard(){
+  const w=S.w;
+  if(!S.card[w]){
+    const e=CONFIG.EVENTS[rnd(CONFIG.EVENTS.length)];let sh=0;
+    S.card[w]={...e};
+    once("card"+w,()=>{if(e.amt<0)sh=pay(e.t,-e.amt);else if(e.amt>0)add(e.t,e.amt);S.card[w].sh=sh});
+  }
+  const c=S.card[w],net=c.amt<0?c.amt+(c.sh||0):c.amt;
+  go(`<div class="paper stack"><span class="eyebrow">돌발 카드</span><div class="bigcard reveal"><h3>${esc(c.t)}</h3><p class="amt" style="color:${net<0?"var(--bad)":net>0?"var(--good)":"var(--muted)"}">${net===0?"0원":signed(net)}</p>${c.sh?`<p class="muted">보험으로 ${won(c.sh)} 면제됐어요.</p>`:""}</div><button class="btn" data-act="next">다음</button></div>`);
+}
+function rLaptop(){
+  const l=S.laptop,c=CONFIG.LAPTOP;
+  if(!l)return go(`<div class="paper stack"><span class="eyebrow">고정 돌발 이벤트</span><h2>노트북 액정이 깨졌어요!</h2><p>시험기간이라 고치지 않을 수는 없어요.</p>
+    <button class="choice" data-act="laptop" data-v="A"><b>정식 센터 수리</b><br>${won(c.center)} 확정 지출</button>
+    <button class="choice" data-act="laptop" data-v="B"><b>사설 수리 도전</b><br>${won(c.try)} 지출 후 주사위. 1~${c.successMax}이면 끝, 나머지는 ${won(c.failExtra)} 추가</button></div>`);
+  go(`<div class="paper stack"><span class="eyebrow">수리 결과</span>${l.opt==="B"?`<div class="dice reveal">${l.dice}</div>`:""}
+  <p class="note ${l.opt==="B"&&l.dice>c.successMax?"bad":"good"}"><b>총 ${won(l.paid)} 지출</b>${l.saved?` (보험으로 ${won(l.saved)} 면제)`:""}<br>${l.opt==="A"?"센터에서 안전하게 고쳤어요.":l.dice<=c.successMax?"수리에 성공했어요!":"수리에 실패해서 추가 비용이 들었어요."}</p>
+  <button class="btn" data-act="next">다음</button></div>`);
+}
+/* 상점 */
+function cartLines(){
+  const out=[],w=S.w,ab=S.abilityOn;
+  if(w===1&&S.book){const p=CONFIG.BOOK[S.book];out.push({id:"book",l:S.book==="used"?"전공 교재 (중고)":"전공 교재",p,sat:0})}
+  for(const it of CONFIG.SHOP[w]){if(S.cart[it.id])out.push({id:it.id,l:it.name,p:it.id==="ott"&&S.team===5?0:it.price,sat:it.sat})}
+  if(S.ott&&w>1)out.push({id:"ottAuto",l:"OTT 구독 자동 결제",p:S.team===5?0:CONFIG.OTT.price,sat:CONFIG.OTT.nextSat,auto:1});
+  if(S.cart.save)out.push({id:"save",l:"비상금 저축 납입",p:CONFIG.SAVING.price,sat:CONFIG.SAVING.sat});
+  out.forEach(x=>{x.base=x.p;if(ab===x.id&&S.team===1){const d=Math.min(CONFIG.ABILITY_VALUE,x.p);x.p-=d;x.note=` (할인 ${won(d)})`}if(ab===x.id&&S.team===3){x.sat+=CONFIG.ABILITY_SAT;x.note=` (만족도 +${CONFIG.ABILITY_SAT})`}});
+  return out;
+}
+function rShop(){
+  const w=S.w,lines=cartLines(),total=lines.reduce((a,x)=>a+x.p,0)+CONFIG.FIXED_COST,after=S.bal-total;
+  const canAb=(S.team===1||S.team===3)&&!S.abilityUsed;
+  const items=CONFIG.SHOP[w].filter(it=>!(it.flash&&S.flashLeft<=0&&!S.cart[it.id])).map(it=>{
+    const on=!!S.cart[it.id];
+    const price=it.id==="ott"&&S.team===5?"0원":won(it.price);
+    return`<button id="it-${it.id}" class="item ${on?"on":""}" data-act="toggle" data-v="${it.id}"><span class="box">${on?"✓":""}</span><span><b>${it.name}</b><br><span class="tag">만족도 +${it.sat}${it.tag?` · ${it.tag}`:""}${it.flash?` · <span class="flash" id="flashT">${Math.ceil(S.flashLeft)}초 남음</span>`:""}</span></span><span class="pr">${price}</span></button>`}).join("");
+  const book=w===1?`<div class="stack" style="gap:6px"><b>전공 교재 (필수 구매)</b><div class="row2"><button id="bk-used" class="chip ${S.book==="used"?"on":""}" data-act="book" data-v="used">중고 ${won(CONFIG.BOOK.used)}</button><button id="bk-new" class="chip ${S.book==="new"?"on":""}" data-act="book" data-v="new">새 책 ${won(CONFIG.BOOK.new)}</button></div></div>`:"";
+  const sv=`<button id="it-save" class="item ${S.cart.save?"on":""}" data-act="toggle" data-v="save"><span class="box">${S.cart.save?"✓":""}</span><span><b>비상금 저축</b><br><span class="tag">만족도 +${CONFIG.SAVING.sat} · 게임 끝에 ${won(CONFIG.SAVING.refund)} 환급</span></span><span class="pr">${won(CONFIG.SAVING.price)}</span></button>`;
+  const wd=S.savings>0?`<button class="btn ghost" data-act="withdraw">저축 ${S.savings}건 중 1건 인출 (${won(CONFIG.SAVING.price)}, 이자·만족도 없음)</button>`:"";
+  const eligible=lines.filter(x=>!x.auto&&x.id!=="save"&&(S.team===1?x.base>0:x.sat>0&&x.id!=="ott"));
+  const ab=canAb?`<div class="note"><b>${CONFIG.TEAMS[S.team].ability}</b> 쓸 상품을 고르세요. 주 끝에 1회 사용돼요.<div class="mini-row" style="margin-top:8px">${eligible.length?eligible.map(x=>`<button id="ab-${x.id}" class="chip ${S.abilityOn===x.id?"on":""}" data-act="ability" data-v="${x.id}">${esc(x.l)}</button>`).join(""):'<span class="muted">먼저 상품을 담아 주세요.</span>'}</div></div>`:"";
+  go(`<div class="paper stack"><span class="eyebrow">${w}주차 소비 상점</span><h2>이번 주 뭘 살까요?</h2>
+  ${book}<div class="stack" style="gap:8px">${items}${sv}</div>${wd}${ab}
+  <div><div class="forecast"><span>주 끝 결제 (고정지출 포함)</span><span>${won(total)}</span></div>
+  <div class="forecast" style="border-top:0;padding-top:0"><span>결제 후 잔액</span><span style="color:${after<0?"var(--bad)":"var(--ink)"}">${after.toLocaleString("ko-KR")}원</span></div></div>
+  ${after<0?`<p class="note warn">이대로면 잔액이 0원 아래로 내려가요.${w===3?" 지금 끝나면 파산이에요.":" 남은 주에 메워야 해요."}</p>`:""}
+  ${w===1&&!S.book?'<p class="note warn">전공 교재를 골라야 다음 주로 갈 수 있어요.</p>':""}
+  <button class="btn" data-act="checkout" ${w===1&&!S.book?"disabled":""}>이번 주 마감하기</button></div>`);
+  if(w===2&&S.flashLeft>0){
+    let t=performance.now();
+    flashTimer=setInterval(()=>{const n=performance.now(),dt=(n-t)/1000;t=n;if(paused)return;S.flashLeft-=dt;const el=$("#flashT");if(el)el.textContent=Math.max(0,Math.ceil(S.flashLeft))+"초 남음";if(S.flashLeft<=0){clearInterval(flashTimer);render()}},200);
+  }
+}
+function settle(){
+  const w=S.w;
+  once("settle"+w,()=>{
+    add("고정지출",-CONFIG.FIXED_COST);
+    for(const x of cartLines()){
+      add(x.l+(x.note||""),-x.p);S.sat+=x.sat;
+      if(x.id==="ott")S.ott=true;
+      if(x.id==="save")S.savings++;
+    }
+    if(S.abilityOn&&cartLines().length)S.abilityUsed=true;
+    if(w===3){
+      for(let i=0;i<S.savings;i++)add("비상금 환급 (이자 포함)",CONFIG.SAVING.refund);
+      S.savings=0;S.done=true;
+    }
+    S.cart={};S.abilityOn=null;Sync.push();
+  });
+}
+function rSettle(){
+  const lines=S.ledger.filter(x=>x.w===S.w);
+  const inc=lines.filter(x=>x.a>0).reduce((a,x)=>a+x.a,0),out=-lines.filter(x=>x.a<0).reduce((a,x)=>a+x.a,0);
+  go(`<div class="paper stack"><span class="eyebrow">${S.w}주차 정산</span><h2>이번 주 결산</h2>
+  <div class="scores"><div>번 돈<b style="color:var(--good)">${won(inc)}</b></div><div>쓴 돈<b style="color:var(--bad)">${won(out)}</b></div><div>잔액<b>${won(S.bal)}</b></div><div>만족도<b>${S.sat}점</b></div></div>
+  <button class="btn" data-act="${S.w===3?"finish":"nextWeek"}">${S.w===3?"최종 결과 보기":`${S.w+1}주차로`}</button></div>`);
+}
+function receipt(){
+  const inc=S.ledger.filter(x=>x.a>0).reduce((a,x)=>a+x.a,0),out=-S.ledger.filter(x=>x.a<0).reduce((a,x)=>a+x.a,0);
+  const sec=[0,1,2,3].map(w=>{const ls=S.ledger.filter(x=>x.w===w);if(!ls.length)return"";return`<div class="wk-label">${w?`[${w}주차]`:"[시작]"}</div>`+ls.map(x=>`<div class="rl"><span>${esc(x.l)}</span><span>${x.a?signed(x.a):"0원"}</span></div>`).join("")}).join("");
+  return`<div class="receipt"><h3>3주 생활비 영수증</h3><p class="c">${esc(S.name)} · Team ${S.team} ${CONFIG.TEAMS[S.team].name}</p>
+  <div class="sec">${sec}</div>
+  <div class="sec"><div class="rl t"><span>총 수입</span><span>+${inc.toLocaleString("ko-KR")}원</span></div><div class="rl t"><span>총 지출</span><span>-${out.toLocaleString("ko-KR")}원</span></div></div>
+  <div class="sec"><div class="rl t"><span>최종 잔액</span><span>${S.bal.toLocaleString("ko-KR")}원</span></div></div><div class="bars"></div></div>`;
+}
+function renderEnd(){
+  const bk=S.bal<0;
+  go(`<div class="stack"><div class="hero" style="padding-bottom:6px"><h1 class="verdict ${bk?"bad":""}">${bk?"파산...":"생존 성공!"}</h1></div>
+  <div class="scores"><div>최종 잔액<b style="color:${bk?"var(--bad)":"var(--ink)"}">${won(S.bal)}</b></div><div>최종 만족도<b>${S.sat}점</b></div></div>
+  <p style="color:#fff;text-align:center;font-weight:700" id="endRank">${myRank()}</p>
+  ${receipt()}
+  <button class="btn yellow only-mobile" data-act="openSheet">순위 보기</button>
+  <button class="btn ghost" style="background:#fff" data-act="restart">다시 도전하기</button></div>`);
+}
+function renderFull(){
+  const url=location.href.split("#")[0]+"#room-"+Sync.code;
+  go(`<div id="full"><p>방 코드</p><div class="code">${esc(Sync.code.toUpperCase())}</div>
+  <div class="paper board" id="fullBoard">${fullBoard()}</div>
+  <div class="row2" style="max-width:900px;margin:12px auto 0"><button class="btn ghost" style="background:#fff" data-act="copyLink" data-v="${esc(url)}">참가 링크 복사</button><button class="btn ghost" style="background:#fff" data-act="toStart">나가기</button></div></div>`);
+}
+
+/* ---------- 미니게임 (알바) ---------- */
+function rMini(){
+  const w=S.w,m=CONFIG.MINI[w],r=S.mini[w];
+  if(r){
+    const L=(a,b,c="")=>`<div class="rl ${c}"><span>${a}</span><span>${b}</span></div>`;
+    return go(`<div class="paper stack"><span class="eyebrow">${w}주차 아르바이트 정산</span>
+    <div class="bubble-row"><span class="boss" aria-label="${m.boss}">${m.icon}</span><p class="bubble">${r.out?"목숨을 모두 잃었으니 오늘은 여기까지 할게요. 일한 만큼만 정산해 드릴게요.":"수고했어요! 오늘 일한 만큼 정산해 드릴게요."}</p></div>
+    <div class="receipt"><h3>${m.job} 급여 명세서</h3>
+    <div class="sec">${L("총 업무 수행 횟수",r.total+"회")}${L("정답",r.ok+"개")}${L("오답·실수",r.bad+"개")}</div>
+    <div class="sec">${L("기본 수입",signed(r.base))}${L("추가 보너스",signed(r.bonusPay))}${L("실수 감점",r.pen?signed(-r.pen):"0원")}${r.base+r.bonusPay-r.pen>CONFIG.MINI_MAX_REWARD?L("1회 급여 상한",won(CONFIG.MINI_MAX_REWARD)):""}</div>
+    <div class="sec">${L("최종 획득 금액",won(r.reward),"t")}${L("남은 목숨",`${heartStr(r.lives)} ${r.lives} / ${CONFIG.MINI_LIVES}`)}${r.bonus?L("열정 페이 극복",signed(CONFIG.ABILITY_VALUE)):""}</div></div>
+    <button class="btn" data-act="next">다음</button></div>`);
+  }
+  if(!G||G.w!==w)return go(`<div class="paper stack"><span class="eyebrow">${w}주차 아르바이트 · ${m.seconds}초 · 목숨 ${CONFIG.MINI_LIVES}개</span><h2>${m.job}</h2>
+    ${m.bubbles.map(t=>`<div class="bubble-row"><span class="boss" aria-label="${m.boss}">${m.icon}</span><p class="bubble">${esc(t)}</p></div>`).join("")}
+    <button class="btn yellow" data-act="miniStart">출근하기</button></div>`);
+}
+const heartStr=n=>"❤️".repeat(Math.max(0,n))+"🖤".repeat(CONFIG.MINI_LIVES-Math.max(0,n));
+const hearts=()=>heartStr(G.lives);
+function miniStart(){
+  const w=S.w,m=CONFIG.MINI[w];
+  G={w,start:now(),len:m.seconds*1000,ok:0,gold:0,fails:0,lives:CONFIG.MINI_LIVES,combo:0,comboPay:0,end:false,raf:0};
+  go(`<div class="paper"><div class="tbar"><i id="tb"></i></div><div class="mhud"><span id="mtime">${m.seconds}초</span><span id="mlives" class="hearts" aria-label="남은 목숨">${hearts()}</span><span id="mscore">0원</span></div><div id="arena"></div>${w===3?'<div class="sort" id="sortBtns"></div>':""}</div>`);
+  if(w===1)spawnBar();
+  if(w===2){G.m=[];for(let i=0;i<3;i++)spawnMos()}
+  if(w===3)spawnBox();
+  let last=now();
+  const tick=()=>{
+    if(!G||G.end)return;
+    G.raf=requestAnimationFrame(tick);
+    if(paused)return;
+    const t=now(),left=G.len-(t-G.start),dt=Math.min(50,t-last);last=t;
+    $("#tb").style.width=Math.max(0,left/G.len*100)+"%";$("#mtime").textContent=Math.ceil(Math.max(0,left)/1000)+"초";
+    if(w===1&&G.bar&&t-G.bar.born>G.bar.life){const b=G.bar;b.el.remove();G.bar=null;if(!b.bad)fail(b.x,b.y,"놓침");if(G&&!G.end)spawnBar()}
+    if(w===2){moveMos(dt);for(const o of [...G.m]){if(t-o.born>o.life){o.el.remove();G.m=G.m.filter(q=>q!==o);if(!o.bee)fail(o.x,o.y,"도망");if(G&&!G.end)spawnMos()}}}
+    if(G&&!G.end&&left<=0)finishMini(false);
+  };
+  tick();
+}
+function miniPay(){
+  const w=S.w,m=CONFIG.MINI[w],base=w===2?G.ok*m.pay+G.gold*m.gold:G.ok*m.pay;let bonus=0;
+  if(w===1&&G.ok>=m.bonusAt)bonus+=m.bonus;
+  if(w===2&&G.done&&!G.fails&&G.ok+G.gold>0)bonus+=m.noMissBonus;
+  if(w===3){bonus+=G.comboPay;if(!G.fails&&G.ok>=m.accuracyMin)bonus+=m.accuracyBonus}
+  const pen=G.fails*m.penalty;
+  return{base,bonus,pen,total:Math.max(0,Math.min(CONFIG.MINI_MAX_REWARD,base+bonus-pen))};
+}
+function fx(x,y,t,minus){const el=document.createElement("span");el.className="fx"+(minus?" minus":"");el.textContent=t;el.style.left=x+"%";el.style.top=y+"%";$("#arena").append(el);setTimeout(()=>el.remove(),600)}
+function showScore(){$("#mscore").textContent=won(miniPay().total)}
+function fail(x,y,why){
+  G.fails++;G.lives--;G.combo=0;
+  fx(x,y,`${why} -${CONFIG.MINI[S.w].penalty.toLocaleString("ko-KR")}`,true);
+  $("#mlives").textContent=hearts();showScore();
+  const a=$("#arena");a.classList.remove("hit");void a.offsetWidth;a.classList.add("hit");
+  if(G.lives<=0)finishMini(true);
+}
+function spawnBar(){
+  const b=document.createElement("button"),bad=Math.random()<.18,x=14+rnd(72),y=14+rnd(72);
+  b.className="barcode"+(bad?" bad":"");b.setAttribute("aria-label",bad?"불량 바코드":"바코드");b.innerHTML="<i></i>";b.style.left=x+"%";b.style.top=y+"%";
+  const o={el:b,bad,x,y,born:now(),life:Math.max(1100,1900-G.ok*35)};G.bar=o;
+  b.addEventListener("pointerdown",e=>{e.preventDefault();if(paused||!G||G.end)return;b.remove();G.bar=null;
+    if(bad)fail(x,y,"불량");else{G.ok++;fx(x,y,"+500");showScore()}
+    if(G&&!G.end)spawnBar()});
+  $("#arena").append(b);
+}
+function spawnMos(){
+  const r=Math.random(),bee=r<.2,gold=!bee&&r<.32,b=document.createElement("button");
+  b.className="mosq"+(gold?" gold":"");b.setAttribute("aria-label",bee?"꿀벌":gold?"황금 모기":"모기");b.innerHTML=`<span>${bee?"🐝":"🦟"}</span>`;
+  const o={el:b,gold,bee,x:8+rnd(84),y:8+rnd(84),vx:(rnd(2)?1:-1)*(.012+Math.random()*.03),vy:(rnd(2)?1:-1)*(.012+Math.random()*.03),born:now(),life:bee?3000:4200};
+  b.addEventListener("pointerdown",e=>{e.preventDefault();if(paused||!G||G.end)return;b.remove();G.m=G.m.filter(q=>q!==o);
+    if(bee)fail(o.x,o.y,"꿀벌");else{gold?G.gold++:G.ok++;fx(o.x,o.y,"+"+(gold?CONFIG.MINI[2].gold:CONFIG.MINI[2].pay).toLocaleString("ko-KR"));showScore()}
+    if(G&&!G.end)spawnMos()});
+  G.m.push(o);$("#arena").append(b);place(o);
+}
+function place(o){o.el.style.left=o.x+"%";o.el.style.top=o.y+"%"}
+function moveMos(dt){for(const o of G.m){o.x+=o.vx*dt;o.y+=o.vy*dt;if(o.x<6||o.x>94){o.vx*=-1;o.x=Math.min(94,Math.max(6,o.x))}if(o.y<8||o.y>92){o.vy*=-1;o.y=Math.min(92,Math.max(8,o.y))}if(Math.random()<.02)o.vx*=-1;place(o)}}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+function spawnBox(){
+  const R=CONFIG.REGIONS,names=Object.keys(R);let kind,city;
+  do{kind=names[rnd(names.length)];city=R[kind][rnd(R[kind].length)]}while(city===G.city);
+  G.kind=kind;G.city=city;
+  G.opts=shuffle([kind,...shuffle(names.filter(n=>n!==kind)).slice(0,3)]);
+  $("#arena").querySelector(".parcel")?.remove();
+  $("#arena").insertAdjacentHTML("beforeend",`<div class="parcel"><div>${esc(city)}</div></div>`);
+  $("#sortBtns").innerHTML=G.opts.map((n,i)=>`<button data-act="sort" data-v="${esc(n)}"><small>${i+1}</small>${esc(n)}</button>`).join("");
+}
+function sortBox(k){
+  if(!G||G.end||paused||G.w!==3)return;
+  const m=CONFIG.MINI[3];
+  if(k===G.kind){G.ok++;G.combo++;const c=G.combo%m.comboEvery===0;if(c)G.comboPay+=m.combo;showScore();fx(50,18,c?`${m.comboEvery}연속 +${m.combo.toLocaleString("ko-KR")}`:"+"+m.pay.toLocaleString("ko-KR"));spawnBox()}
+  else{fail(50,18,"오분류");if(G&&!G.end)spawnBox()}
+}
+function finishMini(out){
+  const w=S.w,m=CONFIG.MINI[w];G.end=true;G.done=!out;cancelAnimationFrame(G.raf);
+  const p=miniPay(),good=G.ok+G.gold,slip={lives:G.lives,ok:good,bad:G.fails,total:good+G.fails,base:p.base,bonusPay:p.bonus,pen:p.pen,reward:p.total,out};
+  G=null;
+  once("mini"+w,()=>{if(p.total)add(`${m.job} 급여`,p.total);slip.bonus=p.total>0?bonus():false;S.mini[w]=slip});
+  render();
+}
+
+/* ---------- 입력 처리 ---------- */
+const ACT={
+  start(){
+    const n=$("#nick").value.trim(),e=$("#startErr");
+    if(!n){e.hidden=false;e.textContent="닉네임을 입력해 주세요.";return}
+    const code=cleanCode($("#roomCode").value);
+    const pid=(store.get("bankrupt.pid"))||("p"+Date.now().toString(36)+rnd(1e6).toString(36));store.set("bankrupt.pid",pid);
+    S=newGame(n,code,pid);screen="team";save();Sync.start(code);render();
+  },
+  continue(){S=store.get("bankrupt.game");screen="game";Sync.start(S.code);render()},
+  host(){
+    const code=cleanCode($("#roomCode").value)||Math.random().toString(36).slice(2,8);
+    S=null;screen="full";Sync.start(code,true);render();
+  },
+  toStart(){Sync.stop();screen="start";location.hash="";render()},
+  copyLink(b){navigator.clipboard?.writeText(b.dataset.v).then(()=>{b.textContent="복사했어요"}).catch(()=>{b.textContent=b.dataset.v})},
+  pick(b){S.team=+b.dataset.v;screen="reveal";save();Sync.push();render()},
+  next(){if(screen==="reveal"){screen="game"}else{S.si++}save();render()},
+  nextWeek(){S.w++;S.si=0;S.flashLeft=CONFIG.FLASH_SECONDS;save();Sync.push();render()},
+  finish(){screen="end";save();Sync.push();render()},
+  cancelOtt(){S.ott=false;save();render()},
+  answer(b){const k=+b.dataset.v,i=S.qi;S.qAns[i]=k;if(k===CONFIG.QUIZ[i].a)once("q"+i,()=>add(`퀴즈 ${i+1}번 정답`,CONFIG.QUIZ_REWARD));save();render()},
+  quizNext(){if(S.qi+1<CONFIG.QUIZ.length){S.qi++;save();render()}else ACT.next()},
+  smish(b){const k=+b.dataset.v,o=CONFIG.SMISHING.options[k];S.smish=k;once("smish",()=>{if(o.amt<0){const sh=pay("스미싱 피해",-o.amt);S.smishAmt=o.amt+sh}else{add("스미싱 대응 보상",o.amt);bonus()}});save();render()},
+  essay(){
+    const t=$("#essayText").value.trim(),o=CONFIG.ESSAY;if(!t)return;
+    const hits=Object.entries(o.keywords).filter(([,ks])=>ks.some(k=>t.includes(k))).map(([k])=>k);
+    const pass=t.length>=o.minLength&&hits.length>0;S.essay={text:t,pass,hits};
+    if(pass)once("essay",()=>{add("합리적 소비 미션 보상",o.reward);bonus()});save();render();
+  },
+  laptop(b){
+    const c=CONFIG.LAPTOP,opt=b.dataset.v;
+    once("laptop",()=>{
+      if(opt==="A"){const sv=pay("노트북 정식 수리",c.center);S.laptop={opt,paid:c.center-sv,saved:sv}}
+      else{const dice=1+rnd(6);let sv=pay("노트북 사설 수리",c.try),paid=c.try-sv;if(dice>c.successMax){const s2=pay("수리 실패 추가 비용",c.failExtra);paid+=c.failExtra-s2;sv+=s2}S.laptop={opt,dice,paid,saved:sv}}
+    });render();
+  },
+  toggle(b){const id=b.dataset.v;if(S.cart[id]){delete S.cart[id];if(S.abilityOn===id)S.abilityOn=null}else S.cart[id]=1;save();render("it-"+id)},
+  book(b){if(S.abilityOn==="book")S.abilityOn=null;S.book=b.dataset.v;save();render("bk-"+b.dataset.v)},
+  ability(b){S.abilityOn=S.abilityOn===b.dataset.v?null:b.dataset.v;save();render("ab-"+b.dataset.v)},
+  withdraw(){S.savings--;S.sat=Math.max(0,S.sat-CONFIG.SAVING.sat);add("비상금 중도 인출",CONFIG.SAVING.price);save();render()},
+  checkout(){if(S.w===1&&!S.book)return;settle();S.si++;save();render()},
+  miniStart,
+  sort(b){sortBox(b.dataset.v)},
+  tab(b){boardTab=b.dataset.v;renderBoards()},
+  openSheet(){$("#sheet").hidden=false;renderBoards()},
+  closeSheet(){$("#sheet").hidden=true},
+  pause(){if(paused)return;paused=true;pauseAt=performance.now();$("#pause").hidden=false},
+  resume(){if(!paused)return;paused=false;pausedMs+=performance.now()-pauseAt;$("#pause").hidden=true},
+  askRestart(){askModal("지금까지의 기록을 지우고 처음부터 다시 할까요?",()=>{ACT.resume();ACT.restart()})},
+  restart(){G=null;store.del("bankrupt.game");Sync.stop();const n=S&&S.name;S=null;screen="start";render();if(n&&$("#nick"))$("#nick").value=n},
+  modalNo(){$("#modal").hidden=true},
+  modalYes(){$("#modal").hidden=true;modalYes&&modalYes()}
+};
+function askModal(t,yes){$("#modalText").textContent=t;modalYes=yes;$("#modal").hidden=false}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(b&&ACT[b.dataset.act]&&!b.disabled)ACT[b.dataset.act](b)});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&screen==="game"){paused?ACT.resume():ACT.pause()}
+  if(G&&G.w===3&&!paused&&G.opts&&["1","2","3","4"].includes(e.key))sortBox(G.opts[+e.key-1])
+});
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&G&&!paused)ACT.pause()});
+
+/* 시작 */
+render();
+</script>
+
+</body></html>
